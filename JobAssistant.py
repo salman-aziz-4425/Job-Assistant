@@ -36,7 +36,6 @@ class JobAssistant:
             self.embedding_cache = {}
 
     def save_embedding_cache(self):
-        """Save embeddings to cache file."""
         try:
             with open(self.embedding_cache_file, 'wb') as f:
                 pickle.dump(self.embedding_cache, f)
@@ -45,7 +44,6 @@ class JobAssistant:
             print(f"Error saving embedding cache: {e}")
 
     def get_embedding(self, text, force_refresh=False):
-        """Get embedding for text using OpenAI's embedding API with caching."""
         if not text:
             return None
         
@@ -82,7 +80,6 @@ class JobAssistant:
         return dot_product / (norm_1 * norm_2) if norm_1 * norm_2 != 0 else 0
 
     def get_all_jobs(self):
-        """Get all jobs with trade information."""
         try:
             pipeline = [
                 {"$lookup": {
@@ -98,7 +95,6 @@ class JobAssistant:
             return []
 
     def get_trade_name(self, job):
-        """Extract trade name from job data."""
         trade_name = job.get('trade', '')
         if 'trade_info' in job and job['trade_info']:
             if isinstance(job['trade_info'], list) and len(job['trade_info']) > 0:
@@ -108,7 +104,6 @@ class JobAssistant:
         return trade_name
 
     def get_job_description(self, job, include_details=True):
-        """Create a descriptive string from job data."""
         trade_name = self.get_trade_name(job)
         service_type = job.get('service', job.get('serviceType', ''))
         job_item = job.get('jobItem', job.get('jobName', ''))
@@ -124,7 +119,6 @@ class JobAssistant:
         return description
 
     def enrich_query(self, customer_problem):
-        """Enhance the customer query with AI-extracted components."""
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
@@ -172,7 +166,6 @@ class JobAssistant:
         return job_similarities[:self.MAX_RESULTS]
 
     def refresh_embeddings_cache(self):
-        """Refresh all embeddings in the cache."""
         all_jobs = self.get_all_jobs()
         print(f"Refreshing embeddings for {len(all_jobs)} jobs...")
         
@@ -184,7 +177,6 @@ class JobAssistant:
         print("Embedding cache refresh complete!")
         
     def display_relevant_jobs(self, relevant_jobs):
-        """Display relevant jobs with their matching scores."""
         if not relevant_jobs:
             print("Could not find any relevant jobs.")
             return

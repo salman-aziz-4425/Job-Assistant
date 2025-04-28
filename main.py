@@ -52,14 +52,11 @@ def save_embedding_cache():
         print(f"Error saving embedding cache: {e}")
 
 def get_embedding(text, force_refresh=False):
-    """Get embedding with caching to avoid unnecessary API calls"""
     if not text:
         return None
-        
-    # Create a hash of the text to use as cache key
+    
     text_hash = hashlib.md5(text.encode('utf-8')).hexdigest()
     
-    # Return cached embedding if available and not forced to refresh
     if not force_refresh and text_hash in embedding_cache:
         return embedding_cache[text_hash]
     
@@ -69,11 +66,8 @@ def get_embedding(text, force_refresh=False):
             input=text
         )
         embedding = response['data'][0]['embedding']
-        
-        # Cache the embedding
+    
         embedding_cache[text_hash] = embedding
-        
-        # Save cache periodically (every 10 new embeddings)
         if len(embedding_cache) % 10 == 0:
             save_embedding_cache()
             
@@ -83,7 +77,6 @@ def get_embedding(text, force_refresh=False):
         return None
 
 def cosine_similarity(vec1, vec2):
-    """Calculate cosine similarity between two vectors using numpy for speed"""
     if not vec1 or not vec2:
         return 0
     vec1 = np.array(vec1)
@@ -110,7 +103,6 @@ def get_all_jobs():
         return []
 
 def get_job_description(job, include_details=True):
-    """Generate a comprehensive job description for embedding"""
     trade_name = get_trade_name(job)
     service_type = job.get('service', job.get('serviceType', ''))
     job_item = job.get('jobItem', job.get('jobName', ''))
@@ -125,7 +117,6 @@ def get_job_description(job, include_details=True):
     return description
 
 def get_trade_name(job):
-    """Extract trade name from job object"""
     trade_name = job.get('trade', '')
     if 'trade_info' in job and job['trade_info']:
         if isinstance(job['trade_info'], list) and len(job['trade_info']) > 0:
@@ -135,22 +126,23 @@ def get_trade_name(job):
     return trade_name
 
 def enrich_query(customer_problem):
-    """Enrich customer query using OpenAI to extract key information"""
     try:
-        response = openai.Completion.create(
-            model="text-davinci-003",
-            prompt=f"Extract the key components from this customer problem description. Include trade type, equipment details, and issue symptoms:\n\nCustomer problem: {customer_problem}\n\nExtracted details:",
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Extract the key components from problem descriptions for service jobs. Include trade type, equipment details, and issue symptoms."},
+                {"role": "user", "content": f"Customer problem: {customer_problem}\n\nExtract the key components from this problem description:"}
+            ],
             max_tokens=150,
             temperature=0.2
         )
-        enriched_query = response.choices[0].text.strip()
+        enriched_query = response['choices'][0]['message']['content'].strip()
         return f"{customer_problem} {enriched_query}"
     except Exception as e:
         print(f"Error enriching query: {e}")
         return customer_problem
 
 def find_relevant_jobs(customer_problem, all_jobs):
-    """Find relevant jobs using RAG approach"""
     print("Enriching query...")
     enriched_query = enrich_query(customer_problem)
     print(f"Enriched query: {enriched_query}")
@@ -176,7 +168,6 @@ def find_relevant_jobs(customer_problem, all_jobs):
     return job_similarities[:MAX_RESULTS]
 
 def refresh_embeddings_cache():
-    """Force refresh the embeddings cache for all jobs"""
     all_jobs = get_all_jobs()
     print(f"Refreshing embeddings for {len(all_jobs)} jobs...")
     

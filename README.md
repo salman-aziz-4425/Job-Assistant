@@ -1,49 +1,96 @@
-# Job Assistant with Advanced RAG
+# Job Assistant
 
-This application uses Retrieval-Augmented Generation (RAG) to match customer problem descriptions with relevant jobs from a MongoDB database. It leverages OpenAI embeddings for semantic similarity matching and includes advanced features like query enrichment, embedding caching, and efficient similarity calculations.
+A semantic search tool for finding relevant jobs in a MongoDB database using OpenAI embeddings.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                                                                     │
+│                       Job Assistant Architecture                     │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
+│                 │      │                 │      │                 │
+│  User Interface │◄────►│  Job Assistant  │◄────►│  Embedding      │
+│  (CLI)          │      │  Core           │      │  Cache          │
+│                 │      │                 │      │                 │
+└─────────────────┘      └────────┬────────┘      └─────────────────┘
+                                  │
+                                  │
+         ┌─────────────────────┐  │  ┌─────────────────────────┐
+         │                     │  │  │                         │
+         │  OpenAI API         │◄─┴─►│  MongoDB                │
+         │  - Embeddings       │     │  - Jobs Collection      │
+         │  - Query Enrichment │     │  - Trades Collection    │
+         │                     │     │                         │
+         └─────────────────────┘     └─────────────────────────┘
+```
 
 ## Features
 
-- **Embedding Caching**: Stores embeddings locally to reduce API calls and improve performance
-- **Query Enrichment**: Uses OpenAI to extract key details from customer problems
-- **Efficient Similarity Search**: Uses NumPy for fast vector operations
-- **Progress Tracking**: Shows progress during processing with tqdm
-- **Detailed Job Context**: Includes comprehensive job information for better matching
+- Semantic similarity search using OpenAI embeddings
+- Query enrichment using GPT-3.5 Turbo
+- Caching mechanism for embeddings to reduce API calls
+- MongoDB integration for job and trade data
 
 ## Setup
 
-1. Clone this repository
+1. Clone the repository
 2. Install dependencies:
    ```
-   pip install -r requirements.txt
+   pip install pymongo openai python-dotenv numpy tqdm
    ```
-3. Set your OpenAI API key as an environment variable:
+3. Create a `.env` file with the following variables:
    ```
-   export OPENAI_API_KEY=your_api_key_here
+   OPENAI_API_KEY=your_openai_api_key
+   MONGO_URI=your_mongodb_connection_string
+   DB_NAME=your_database_name
+   MAX_RESULTS=10
    ```
-   Or create a `.env` file based on `env.example`
 
 ## Usage
 
-### Regular search:
-```
+### Running the Application
+
+To use the job assistant to find relevant jobs:
+
+```bash
 python main.py
 ```
-When prompted, enter a description of the customer's problem.
 
-### Refresh embedding cache:
-```
+You will be prompted to enter a customer problem description. The system will find the most relevant jobs based on semantic similarity.
+
+### Refreshing the Embedding Cache
+
+To refresh the embedding cache for all jobs in the database:
+
+```bash
 python main.py --refresh-cache
 ```
-This will pre-calculate and cache embeddings for all jobs in the database.
+
+### Running Tests
+
+To test the functionality of the JobAssistant class:
+
+```bash
+python test_job_assistant.py
+```
+
+## Code Structure
+
+- `JobAssistant.py`: Main class with all functionality
+- `main.py`: Command-line interface
+- `test_job_assistant.py`: Simple test script
 
 ## How It Works
 
-1. The application connects to your MongoDB database to retrieve job information
-2. It enriches the customer query to extract key details using OpenAI
-3. It calculates embeddings for the query and job descriptions
-4. It uses cosine similarity to find the most semantically similar jobs
-5. It presents the top matches, ranked by similarity score
+1. The system enriches user queries using OpenAI's GPT-3.5 model to extract key components
+2. Job descriptions are converted to vector embeddings using OpenAI's embedding API
+3. Cosine similarity is calculated between the query embedding and job embeddings
+4. Results are sorted by similarity score and returned to the user
 
 ## Advanced Features
 

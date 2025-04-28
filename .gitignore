@@ -1,0 +1,10 @@
+.venv
+.env
+embeddings_cache.pickle
+*.pickle
+*.pkl
+*.json
+*.csv
+*.xlsx
+*.xls
+*.docx
